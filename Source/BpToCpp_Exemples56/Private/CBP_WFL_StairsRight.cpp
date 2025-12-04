@@ -46,21 +46,20 @@ void ACBP_WFL_StairsRight::OnConstruction(const FTransform& Transform)
     int LoopX = StonesX;
     int MaxHeightZ = StonesZ;
 
-    // 3. Boucles de génération
+   
     for (int32 x = 0; x < LoopX; x++)
     {
-        // Calcul de la position X
+        
         float XPos = x * MeshBounds.X;
 
-        // Déterminer la hauteur de la colonne actuelle. 
-        // L'escalier monte (x + 1) mais ne doit pas dépasser la hauteur max (MaxHeightZ)
+        
         int32 CurrentColumnHeight = FMath::Min(x + 1, MaxHeightZ);
 
         for (int32 z = 0; z < CurrentColumnHeight; z++)
         {
             float ZPos = (z * MeshBounds.Z) + StoneZOffset;
 
-            // CRITIQUE : Scale mis à 1.0f (FVector::OneVector)
+            
             FTransform InstanceTransform;
             InstanceTransform.SetLocation(FVector(XPos, 0.0f, ZPos));
             InstanceTransform.SetRotation(FQuat::Identity);
@@ -70,10 +69,10 @@ void ACBP_WFL_StairsRight::OnConstruction(const FTransform& Transform)
         }
     }
 
-    // 4. Mise à jour du texte
+    
     if (CubeCount)
     {
-        // On récupère le vrai nombre d'instances créées
+        
         int32 RealCount = HISM_Stair->GetInstanceCount();
         FString Str = FString::Printf(TEXT("Cube Count : %d"), RealCount);
         CubeCount->SetText(FText::FromString(Str));
