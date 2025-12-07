@@ -25,17 +25,37 @@ ACPP_CubeFrame::ACPP_CubeFrame()
 	HISM_00 = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("HISM_00"));
 	HISM_00->SetupAttachment(SceneRoot);
 
-	// Setup Variables Default Value(s) (If needed)
+	// Setup Variables Default Value(s) (when in viewport)
 	StoneZ_Offset = 50.f;
 	bRenderText = false;
 	MeshColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+	// Mesh Size Setup
+	MeshSize = { 1.f, 1.f, 1.f };
+	MeshMinSize = 0.25f;
+	MeshMaxSize = 1.f;
 
 }
 
 void ACPP_CubeFrame::OnConstruction(const FTransform& Transform)
 {
+	// Declaration
+	FVector L_FinalLoc = { 1.f, 1.f, 1.f };
+	FTransform L_InstanceTransform = FTransform(FRotator::ZeroRotator, L_FinalLoc, MeshSize);
+	FVector L_ScaleSize = { 1.f, 1.f, 1.f };
+	// Setup for loop
+	int i = 0;
+	int j = 0;
+	int k = 0;
+
+	// -----------------------------------------------------------------------------------------------------------------------
 	// Clear Instances
 	HISM_00->ClearInstances();
+
+	// SEED
+	float L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
+
+	// Mesh Size
+
 
 	if (SM_Stone && Stones_X > 0 && Stones_Y > 0 && Stones_Z > 0 && Material) 
 	{
@@ -49,43 +69,58 @@ void ACPP_CubeFrame::OnConstruction(const FTransform& Transform)
 		// DECLARE L_COLOR
 		FLinearColor L_Color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-		// Setup for loop
-		int i = 0;
 		// For (Fist Index = 0) to Last Index (i < Variable) then add 1 to i
 		for (i = 0; i < Stones_X; i++)
 		{
-			int j = 0;
+			j = 0;
 			for (j = 0; j < Stones_Y; j++) 
 			{
-				int k = 0;
+				k = 0;
 				for (k = 0; k < Stones_Z; k++)
 				{
-					int AxeX = i;
-					int AxeY = j;
-					int AxeZ = k;
+					// Condition to Instanciate
 					if (
-						CubeFrameCondition(AxeY, Stones_Y) && CubeFrameCondition(AxeZ, Stones_Z) ||
-						CubeFrameCondition(AxeX, Stones_X) && CubeFrameCondition(AxeY, Stones_Y) ||
-						CubeFrameCondition(AxeX, Stones_X) && CubeFrameCondition(AxeZ, Stones_Z)
+						CubeFrameCondition(j, Stones_Y) && CubeFrameCondition(k, Stones_Z) ||
+						CubeFrameCondition(i, Stones_X) && CubeFrameCondition(j, Stones_Y) ||
+						CubeFrameCondition(i, Stones_X) && CubeFrameCondition(k, Stones_Z)
 						)
 					{
-						// Setup Vector Location with Mesh Size * Each Index for a 3D Directionnal Instance
-						FVector L_FinalLoc = (GetMeshHalfSize() * FVector(2.f, 2.f, 2.f)) * FVector(AxeX, AxeY, AxeZ);
-						
+						// -----------------------------------------------------------------------------------------------------------------------
+						/* SETUP MESH SIZE */
+						// -----------------------------------------------------------------------------------------------------------------------
+						SetupMeshSize();
+						if (TypeOfMeshSizeGeneration == ETypeOfSize::FullRandom || TypeOfMeshSizeGeneration == ETypeOfSize::Seeded)
+						{
+							MeshSizeMemory = MeshSize;
+							MeshSize = FVector(MeshMaxSize, MeshMaxSize, MeshMaxSize);
+							GetMeshHalfSize();
+
+							// Setup Vector Location with Mesh Size * Each Index for a 3D Directionnal Instance
+							L_FinalLoc = (GetMeshHalfSize() * FVector(2.f, 2.f, 2.f)) * FVector(i, j, k);
+							MeshSize = MeshSizeMemory;
+						}
+						else 
+						{
+							// Setup Vector Location with Mesh Size * Each Index for a 3D Directionnal Instance
+							L_FinalLoc = (GetMeshHalfSize() * FVector(2.f, 2.f, 2.f)) * FVector(i, j, k);
+						}
+
 						// Add Z Offset
 						L_FinalLoc += FVector(0.f, 0.f, StoneZ_Offset);
 
+						// -----------------------------------------------------------------------------------------------------------------------
 						// Variable Transform of the future HISM
-						FTransform L_InstanceTransform = FTransform(
+						L_InstanceTransform = FTransform(
 							FRotator::ZeroRotator,
 							FVector(L_FinalLoc),
-							FVector(1.f, 1.f, 1.f)
+							FVector(MeshSize)
 						);
 						// SET TO HAVE INSTANCE INDEX
 						int L_CurrentInstanceIndex = HISM_00->AddInstance(L_InstanceTransform);
-
+						
+						// -----------------------------------------------------------------------------------------------------------------------
 						// CHECK IF HAVE A MATERIAL
-						switch (RandomGenerationType)
+						switch (RandomGenerationTypeOfColor)
 						{
 						case ETypeOfRnd::None:
 							// DO NOTHING
@@ -107,13 +142,49 @@ void ACPP_CubeFrame::OnConstruction(const FTransform& Transform)
 							break;
 
 						case ETypeOfRnd::Seeded:
-							// MAKE A SEEDED
 							// SET CUSTOM DATA VALUE FOR R, G, B
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 0, 1.f, false);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 1, 1.f, false);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 2, 1.f, false);
+							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
+							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 0, L_SdValue, false);
+							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
+							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 1, L_SdValue, false);
+							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
+							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 2, L_SdValue, false);
+
+							/* INFORMATIONS ON HOW SEEDs WORK
+							
+							---------	Obtenir un entier aléatoire dans une plage (par exemple entre 1 et 100)				--- INFORMATIONS
+							int32 RandomInt = RandomStream.RandRange(1, 100);
+
+    						---------	Obtenir un flottant aléatoire dans une plage (par exemple entre 0.0 et 1.0)			--- INFORMATIONS
+							float RandomFloat = RandomStream.FRandRange(0.0f, 1.0f)
+							
+							---------	Obtenir un vecteur aléatoire sur une sphère unitaire								--- INFORMATIONS
+							FVector RandomDirection = RandomStream.GetUnitVector();
+							
+
+							---------	Initialise le Stream avec la valeur de Seed spécifiée.								--- INFORMATIONS
+							RandomStream.Initialize(SeedValue);
+							
+							---------	Si vous voulez un seed "vraiment" aléatoire à chaque lancement (non reproductible) vous pouvez utiliser :
+							RandomStream.GenerateNewSeed();
+
+							*/
 							break;
-						
+
+						case ETypeOfRnd::SeededUniformColor:
+						{
+							// Initialise le Stream avec la valeur de Seed spécifiée (permet d'uniformiser les couleurs) : 
+							ColorRandomStream.Initialize(ColorSeedValue);
+							// SET CUSTOM DATA VALUE FOR R, G, B
+							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
+							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 0, L_SdValue, false);
+							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
+							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 1, L_SdValue, false);
+							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
+							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 2, L_SdValue, false);
+
+							break;
+						}
 						case ETypeOfRnd::Selected:
 							// SET CUSTOM DATA VALUE FOR R, G, B  ->  From Selected
 							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 0, MeshColor.R, false);
@@ -129,21 +200,30 @@ void ACPP_CubeFrame::OnConstruction(const FTransform& Transform)
 							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 2, 1.f, false);
 							break;
 						}
+						// SWITCH END
 					}
 				}
 			}
 		}
 	}
+
+	// RESET GET MESH HALF SIZE BY CHANGING MESH SIZE
+	L_ScaleSize = SM_Stone->GetBounds().GetBox().GetExtent();
+	L_ScaleSize *= FVector(MeshMaxSize, MeshMaxSize, MeshMaxSize);
 	// --------------------------
 	// TEXTS
 	// --------------------------
+
+	// VISIBILITY
+	BpName->SetVisibility(bRenderText);
+	CubeCount->SetVisibility(bRenderText);
 
 	// BP NAME TEXT
 	BpName->SetText(FText::FromString("BP_CubeFrame"));
 	// PLACEMENT
 	BpName->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
 	BpName->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextCenter);
-	BpName->SetRelativeLocation(FVector((float(Stones_X) - 1) * GetMeshHalfSize().X, (float(Stones_Y) - 1) * GetMeshHalfSize().Y, (float(Stones_Z) - 1) * GetMeshHalfSize().Z + 25.f));
+	BpName->SetRelativeLocation(FVector((float(Stones_X) - 1) * L_ScaleSize.X, (float(Stones_Y) - 1) * L_ScaleSize.Y, (float(Stones_Z) - 1) * L_ScaleSize.Z + 25.f));
 
 	// NUMBER OF INSTANCE TEXT
 	FString L_CubeCount = "CubeCount : ";
@@ -152,7 +232,7 @@ void ACPP_CubeFrame::OnConstruction(const FTransform& Transform)
 	// PLACEMENT
 	CubeCount->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
 	CubeCount->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextCenter);
-	CubeCount->SetRelativeLocation(FVector((float(Stones_X) - 1) * GetMeshHalfSize().X, (float(Stones_Y) - 1) * GetMeshHalfSize().Y, (float(Stones_Z) - 1)* GetMeshHalfSize().Z - 25.f));
+	CubeCount->SetRelativeLocation(FVector((float(Stones_X) - 1) * L_ScaleSize.X, (float(Stones_Y) - 1) * L_ScaleSize.Y, (float(Stones_Z) - 1)* L_ScaleSize.Z - 25.f));
 
 }
 
@@ -177,6 +257,53 @@ bool ACPP_CubeFrame::CubeFrameCondition(int Index, int Stone)
 
 FVector ACPP_CubeFrame::GetMeshHalfSize()
 {
-	return SM_Stone->GetBounds().GetBox().GetExtent();
+	FVector L_MeshHalfSize = SM_Stone->GetBounds().GetBox().GetExtent();
+	//  Change Mesh Size by the multiplicator of his Size
+	L_MeshHalfSize *= MeshSize;
+	return	L_MeshHalfSize;
 }
 
+
+void ACPP_CubeFrame::SetupMeshSize()
+{
+	// ----------------------------------------------------------------------------------------------------------------------
+	float RandomNumber = ColorRandomStream.FRandRange(MeshMinSize, MeshMaxSize);
+	// MESH SIZE GENERATION
+	switch (TypeOfMeshSizeGeneration)
+	{
+	case ETypeOfSize::Default:
+		// By default it's 1 everywhere
+		MeshSize = { 1.f, 1.f, 1.f };
+		break;
+
+	case ETypeOfSize::FullRandom:
+		MeshSize = FVector(
+			UKismetMathLibrary::RandomFloatInRange(MeshMinSize, MeshMaxSize),
+			UKismetMathLibrary::RandomFloatInRange(MeshMinSize, MeshMaxSize),
+			UKismetMathLibrary::RandomFloatInRange(MeshMinSize, MeshMaxSize));
+		break;
+
+	case ETypeOfSize::Seeded:
+		MeshSize = FVector(
+			ColorRandomStream.FRandRange(MeshMinSize, MeshMaxSize),
+			ColorRandomStream.FRandRange(MeshMinSize, MeshMaxSize),
+			ColorRandomStream.FRandRange(MeshMinSize, MeshMaxSize));
+		break;
+
+	case ETypeOfSize::SeededUniform:
+		SizeRandomStream.Initialize(SizeSeedValue);
+		MeshSize = FVector(RandomNumber, RandomNumber, RandomNumber);
+		break;
+
+	case ETypeOfSize::Selected:
+		// DO NOTHING
+		break;
+
+	default:
+		// By default it's 1 everywhere
+		MeshSize = { 1.f, 1.f, 1.f };
+		break;
+	}
+	// END SWITCH MESH SIZE
+	// -----------------------------------------------------------------------------------------------------------------------
+}

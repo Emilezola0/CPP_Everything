@@ -29,13 +29,26 @@
 /*
 ---
 */
+// Enum for Random stuff
 UENUM(BlueprintType)
 enum class ETypeOfRnd : uint8
 {
-	None		UMETA(DisplayName = "None"),
-	Random		UMETA(DisplayName = "Random"),
-	Seeded		UMETA(DisplayName = "Seeded"),
-	Selected	UMETA(DisplayName = "FromSelection"),
+	None				UMETA(DisplayName = "None"),
+	Random				UMETA(DisplayName = "Random"),
+	Seeded				UMETA(DisplayName = "Seeded"),
+	SeededUniformColor	UMETA(DisplayName = "Seeded Uniform Color"),
+	Selected			UMETA(DisplayName = "From Selection"),
+};
+
+// Enum for Mesh Scaleability
+UENUM(BlueprintType)
+enum class ETypeOfSize : uint8
+{
+	Default				UMETA(DisplayName = "Default Size"),
+	FullRandom			UMETA(DisplayName = "Random"),
+	Seeded				UMETA(DisplayName = "Seeded"),
+	SeededUniform		UMETA(DisplayName = "Seeded Uniform Size"),
+	Selected			UMETA(DisplayName = "Selected"),
 };
 
 
@@ -103,8 +116,41 @@ public:
 	bool bRenderText;
 
 	// OTHERS CONDITIONS FOR DIFFERENTS USAGES
-	UPROPERTY(EditAnywhere, Category = "Default")
-	ETypeOfRnd RandomGenerationType;
+	UPROPERTY(EditAnywhere, Category = "Parameters|Color")
+	ETypeOfRnd RandomGenerationTypeOfColor;
+
+	// SEED
+	UPROPERTY(EditAnywhere, Category = "Parameters|Color")
+	int32 ColorSeedValue;
+
+	UPROPERTY(EditAnywhere, Category = "Parameters|Color")
+	FRandomStream ColorRandomStream;
+
+	// ---------------------------
+	// Bonus Variables
+	// ---------------------------
+
+	UPROPERTY(EditAnywhere, Category = "Parameters|Size")
+	ETypeOfSize TypeOfMeshSizeGeneration;
+
+	UPROPERTY(EditAnywhere, Category = "Parameters|Size|Selected")
+	FVector MeshSize;
+
+	UPROPERTY(EditAnywhere, Category = "Parameters|Size|Random")
+	float MeshMinSize;
+
+	UPROPERTY(EditAnywhere, Category = "Parameters|Size|Random")
+	float MeshMaxSize;
+
+	// SEED
+	UPROPERTY(EditAnywhere, Category = "Parameters|Size|Random")
+	int32 SizeSeedValue;
+
+	UPROPERTY(EditAnywhere, Category = "Parameters|Size|Random")
+	FRandomStream SizeRandomStream;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "Parameters|Size|Private")
+	FVector MeshSizeMemory;
 
 
 	// UENUM(BlueprintType) Rend l'enum accessible et utilisable dans les Blueprints
@@ -119,6 +165,10 @@ public:
 
 	bool CubeFrameCondition(int Index, int Stone);
 
+	// Return the Half Size of the mesh
 	FVector GetMeshHalfSize();
+
+	// Use this for ENUM and all conditions
+	void SetupMeshSize();
 
 };
