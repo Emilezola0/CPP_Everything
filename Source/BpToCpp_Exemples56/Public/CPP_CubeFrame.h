@@ -4,7 +4,40 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+
+// ---------------------------
+// COMPONENTS
+// ---------------------------
+
+// Scene Components
+#include "Components/SceneComponent.h"
+
+// Text Render
+#include <Components/TextRenderComponent.h>
+
+// HISM
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
+
+// Static Mesh
+#include "Engine/StaticMesh.h"
+
+// ---------------------------
+// LAST
+// ---------------------------
 #include "CPP_CubeFrame.generated.h"
+
+/*
+---
+*/
+UENUM(BlueprintType)
+enum class ETypeOfRnd : uint8
+{
+	None		UMETA(DisplayName = "None"),
+	Random		UMETA(DisplayName = "Random"),
+	Seeded		UMETA(DisplayName = "Seeded"),
+	Selected	UMETA(DisplayName = "FromSelection"),
+};
+
 
 UCLASS()
 class BPTOCPP_EXEMPLES56_API ACPP_CubeFrame : public AActor
@@ -15,6 +48,67 @@ public:
 	// Sets default values for this actor's properties
 	ACPP_CubeFrame();
 
+	//OnConstruction is called to re-build the ConstructionScript Code when a change is made. (Its replicates the natural behaviour of a blueprint)
+	virtual void OnConstruction(const FTransform& Transform) override;
+
+	// ---------------------------
+	// COMPONENTS VARIABLES
+	// ---------------------------
+
+	// SCENE COMPONENT
+	UPROPERTY()
+	USceneComponent* SceneRoot;
+
+	// TEXT RENDER
+	UPROPERTY()
+	UTextRenderComponent* BpName;
+
+	UPROPERTY()
+	UTextRenderComponent* CubeCount;
+
+
+	// HISM
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Components")
+	UHierarchicalInstancedStaticMeshComponent* HISM_00;
+
+	// MESH
+	UPROPERTY(EditAnywhere, Category = "Default")
+	UStaticMesh* SM_Stone;
+
+	// Colors
+	UPROPERTY(EditAnywhere, Category = "Default")
+	FLinearColor MeshColor;
+
+
+	// ---------------------------
+	// VARIABLES
+	// ---------------------------
+
+	UPROPERTY(EditAnywhere, Category = "Default")
+	int Stones_X;
+
+	UPROPERTY(EditAnywhere, Category = "Default")
+	int Stones_Y;
+
+	UPROPERTY(EditAnywhere, Category = "Default")
+	int Stones_Z;
+
+	UPROPERTY(EditAnywhere, Category = "Default")
+	float StoneZ_Offset;
+
+	UPROPERTY(EditAnywhere, Category = "Default")
+	UMaterial* Material;
+
+	UPROPERTY(EditAnywhere, Category = "Default")
+	bool bRenderText;
+
+	// OTHERS CONDITIONS FOR DIFFERENTS USAGES
+	UPROPERTY(EditAnywhere, Category = "Default")
+	ETypeOfRnd RandomGenerationType;
+
+
+	// UENUM(BlueprintType) Rend l'enum accessible et utilisable dans les Blueprints
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -22,5 +116,9 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	bool CubeFrameCondition(int Index, int Stone);
+
+	FVector GetMeshHalfSize();
 
 };
