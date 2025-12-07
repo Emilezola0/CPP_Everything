@@ -51,12 +51,12 @@ void ACPP_CubeFrame::OnConstruction(const FTransform& Transform)
 	// Clear Instances
 	HISM_00->ClearInstances();
 
-	// SEED
-	float L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
+	// SEED FOR COLOR
+	RndColorValue = ColorRandomStream.FRandRange(0.f, 1.f);
+	// MESH SIZE RND FLOAT FROM STREAM
+	RandomNumber = SizeRandomStream.FRandRange(MeshMinSize, MeshMaxSize);
 
-	// Mesh Size
-
-
+	// CUBE FRAME
 	if (SM_Stone && Stones_X > 0 && Stones_Y > 0 && Stones_Z > 0 && Material) 
 	{
 		// Set Static mesh to SM_Stone
@@ -89,6 +89,8 @@ void ACPP_CubeFrame::OnConstruction(const FTransform& Transform)
 						/* SETUP MESH SIZE */
 						// -----------------------------------------------------------------------------------------------------------------------
 						SetupMeshSize();
+
+
 						if (TypeOfMeshSizeGeneration == ETypeOfSize::FullRandom || TypeOfMeshSizeGeneration == ETypeOfSize::Seeded)
 						{
 							MeshSizeMemory = MeshSize;
@@ -116,91 +118,13 @@ void ACPP_CubeFrame::OnConstruction(const FTransform& Transform)
 							FVector(MeshSize)
 						);
 						// SET TO HAVE INSTANCE INDEX
-						int L_CurrentInstanceIndex = HISM_00->AddInstance(L_InstanceTransform);
+						CurrentInstanceIndex = HISM_00->AddInstance(L_InstanceTransform);
 						
 						// -----------------------------------------------------------------------------------------------------------------------
 						// CHECK IF HAVE A MATERIAL
-						switch (RandomGenerationTypeOfColor)
-						{
-						case ETypeOfRnd::None:
-							// DO NOTHING
-							// SET CUSTOM DATA VALUE FOR R, G, B
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 0, 1.f, false);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 1, 1.f, false);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 2, 1.f, false);
-							break;
 
-						case ETypeOfRnd::Random:
-							// Random Color (not seeded)
-							UKismetMathLibrary::LinearColor_SetRandomHue(L_Color);
-
-							// SET CUSTOM DATA VALUE FOR R, G, B
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 0, L_Color.R, false);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 1, L_Color.G, false);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 2, L_Color.B, false);
-							
-							break;
-
-						case ETypeOfRnd::Seeded:
-							// SET CUSTOM DATA VALUE FOR R, G, B
-							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 0, L_SdValue, false);
-							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 1, L_SdValue, false);
-							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 2, L_SdValue, false);
-
-							/* INFORMATIONS ON HOW SEEDs WORK
-							
-							---------	Obtenir un entier aléatoire dans une plage (par exemple entre 1 et 100)				--- INFORMATIONS
-							int32 RandomInt = RandomStream.RandRange(1, 100);
-
-    						---------	Obtenir un flottant aléatoire dans une plage (par exemple entre 0.0 et 1.0)			--- INFORMATIONS
-							float RandomFloat = RandomStream.FRandRange(0.0f, 1.0f)
-							
-							---------	Obtenir un vecteur aléatoire sur une sphère unitaire								--- INFORMATIONS
-							FVector RandomDirection = RandomStream.GetUnitVector();
-							
-
-							---------	Initialise le Stream avec la valeur de Seed spécifiée.								--- INFORMATIONS
-							RandomStream.Initialize(SeedValue);
-							
-							---------	Si vous voulez un seed "vraiment" aléatoire à chaque lancement (non reproductible) vous pouvez utiliser :
-							RandomStream.GenerateNewSeed();
-
-							*/
-							break;
-
-						case ETypeOfRnd::SeededUniformColor:
-						{
-							// Initialise le Stream avec la valeur de Seed spécifiée (permet d'uniformiser les couleurs) : 
-							ColorRandomStream.Initialize(ColorSeedValue);
-							// SET CUSTOM DATA VALUE FOR R, G, B
-							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 0, L_SdValue, false);
-							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 1, L_SdValue, false);
-							L_SdValue = ColorRandomStream.FRandRange(0.f, 1.f);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 2, L_SdValue, false);
-
-							break;
-						}
-						case ETypeOfRnd::Selected:
-							// SET CUSTOM DATA VALUE FOR R, G, B  ->  From Selected
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 0, MeshColor.R, false);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 1, MeshColor.G, false);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 2, MeshColor.B, false);
-							break;
-
-						default:
-							// Always put a default
-							// SET CUSTOM DATA VALUE FOR R, G, B
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 0, 1.f, false);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 1, 1.f, false);
-							HISM_00->SetCustomDataValue(L_CurrentInstanceIndex, 2, 1.f, false);
-							break;
-						}
-						// SWITCH END
+						// Setup Color with L_Color
+						SetupColor(L_Color);
 					}
 				}
 			}
@@ -210,9 +134,11 @@ void ACPP_CubeFrame::OnConstruction(const FTransform& Transform)
 	// RESET GET MESH HALF SIZE BY CHANGING MESH SIZE
 	L_ScaleSize = SM_Stone->GetBounds().GetBox().GetExtent();
 	L_ScaleSize *= FVector(MeshMaxSize, MeshMaxSize, MeshMaxSize);
-	// --------------------------
+
+	// ---------------------------------------------
 	// TEXTS
-	// --------------------------
+	// ---------------------------------------------
+#pragma region TextSection
 
 	// VISIBILITY
 	BpName->SetVisibility(bRenderText);
@@ -232,7 +158,9 @@ void ACPP_CubeFrame::OnConstruction(const FTransform& Transform)
 	// PLACEMENT
 	CubeCount->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
 	CubeCount->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextCenter);
-	CubeCount->SetRelativeLocation(FVector((float(Stones_X) - 1) * L_ScaleSize.X, (float(Stones_Y) - 1) * L_ScaleSize.Y, (float(Stones_Z) - 1)* L_ScaleSize.Z - 25.f));
+	CubeCount->SetRelativeLocation(FVector((float(Stones_X) - 1) * L_ScaleSize.X, (float(Stones_Y) - 1) * L_ScaleSize.Y, (float(Stones_Z) - 1) * L_ScaleSize.Z - 25.f));
+
+#pragma endregion
 
 }
 
@@ -263,11 +191,10 @@ FVector ACPP_CubeFrame::GetMeshHalfSize()
 	return	L_MeshHalfSize;
 }
 
-
 void ACPP_CubeFrame::SetupMeshSize()
 {
 	// ----------------------------------------------------------------------------------------------------------------------
-	float RandomNumber = ColorRandomStream.FRandRange(MeshMinSize, MeshMaxSize);
+	SizeRandomStream.Initialize(SizeSeedValue);
 	// MESH SIZE GENERATION
 	switch (TypeOfMeshSizeGeneration)
 	{
@@ -285,13 +212,12 @@ void ACPP_CubeFrame::SetupMeshSize()
 
 	case ETypeOfSize::Seeded:
 		MeshSize = FVector(
-			ColorRandomStream.FRandRange(MeshMinSize, MeshMaxSize),
-			ColorRandomStream.FRandRange(MeshMinSize, MeshMaxSize),
-			ColorRandomStream.FRandRange(MeshMinSize, MeshMaxSize));
+			SizeRandomStream.FRandRange(MeshMinSize, MeshMaxSize),
+			SizeRandomStream.FRandRange(MeshMinSize, MeshMaxSize),
+			SizeRandomStream.FRandRange(MeshMinSize, MeshMaxSize));
 		break;
 
 	case ETypeOfSize::SeededUniform:
-		SizeRandomStream.Initialize(SizeSeedValue);
 		MeshSize = FVector(RandomNumber, RandomNumber, RandomNumber);
 		break;
 
@@ -306,4 +232,89 @@ void ACPP_CubeFrame::SetupMeshSize()
 	}
 	// END SWITCH MESH SIZE
 	// -----------------------------------------------------------------------------------------------------------------------
+}
+
+void ACPP_CubeFrame::SetupColor(FLinearColor Color)
+{
+	switch (RandomGenerationTypeOfColor)
+	{
+	case ETypeOfRnd::None:
+		// DO NOTHING
+		// SET CUSTOM DATA VALUE FOR R, G, B
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 0, 1.f, false);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 1, 1.f, false);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 2, 1.f, false);
+		break;
+
+	case ETypeOfRnd::Random:
+		// Random Color (not seeded)
+		UKismetMathLibrary::LinearColor_SetRandomHue(Color);
+
+		// SET CUSTOM DATA VALUE FOR R, G, B
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 0, Color.R, false);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 1, Color.G, false);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 2, Color.B, false);
+
+		break;
+
+	case ETypeOfRnd::Seeded:
+		// SET CUSTOM DATA VALUE FOR R, G, B
+		RndColorValue = ColorRandomStream.FRandRange(0.f, 1.f);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 0, RndColorValue, false);
+		RndColorValue = ColorRandomStream.FRandRange(0.f, 1.f);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 1, RndColorValue, false);
+		RndColorValue = ColorRandomStream.FRandRange(0.f, 1.f);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 2, RndColorValue, false);
+
+		/* INFORMATIONS ON HOW SEEDs WORK
+
+		---------	Obtenir un entier aléatoire dans une plage (par exemple entre 1 et 100)				--- INFORMATIONS
+		int32 RandomInt = RandomStream.RandRange(1, 100);
+
+		---------	Obtenir un flottant aléatoire dans une plage (par exemple entre 0.0 et 1.0)			--- INFORMATIONS
+		float RandomFloat = RandomStream.FRandRange(0.0f, 1.0f)
+
+		---------	Obtenir un vecteur aléatoire sur une sphère unitaire								--- INFORMATIONS
+		FVector RandomDirection = RandomStream.GetUnitVector();
+
+
+		---------	Initialise le Stream avec la valeur de Seed spécifiée.								--- INFORMATIONS
+		RandomStream.Initialize(SeedValue);
+
+		---------	Si vous voulez un seed "vraiment" aléatoire à chaque lancement (non reproductible) vous pouvez utiliser :
+		RandomStream.GenerateNewSeed();
+
+		*/
+		break;
+
+	case ETypeOfRnd::SeededUniformColor:
+	{
+		// Initialise le Stream avec la valeur de Seed spécifiée (permet d'uniformiser les couleurs) : 
+		ColorRandomStream.Initialize(ColorSeedValue);
+		// SET CUSTOM DATA VALUE FOR R, G, B
+		RndColorValue = ColorRandomStream.FRandRange(0.f, 1.f);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 0, RndColorValue, false);
+		RndColorValue = ColorRandomStream.FRandRange(0.f, 1.f);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 1, RndColorValue, false);
+		RndColorValue = ColorRandomStream.FRandRange(0.f, 1.f);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 2, RndColorValue, false);
+
+		break;
+	}
+	case ETypeOfRnd::Selected:
+		// SET CUSTOM DATA VALUE FOR R, G, B  ->  From Selected
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 0, MeshColor.R, false);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 1, MeshColor.G, false);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 2, MeshColor.B, false);
+		break;
+
+	default:
+		// Always put a default
+		// SET CUSTOM DATA VALUE FOR R, G, B
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 0, 1.f, false);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 1, 1.f, false);
+		HISM_00->SetCustomDataValue(CurrentInstanceIndex, 2, 1.f, false);
+		break;
+	}
+	// SWITCH END
 }

@@ -153,6 +153,21 @@ public:
 	FVector MeshSizeMemory;
 
 
+	// ---------------------------
+	// Private Variables
+	// ---------------------------
+	UPROPERTY(VisibleDefaultsOnly, Category = "Parameters|Color|Private")
+	int CurrentInstanceIndex;
+
+	// For the Color Seed with random float
+	UPROPERTY(VisibleDefaultsOnly, Category = "Parameters|Color|Private")
+	float RndColorValue;
+
+	// Random Number for mesh Size Seed
+	UPROPERTY(VisibleDefaultsOnly, Category = "Parameters|Color|Private")
+	float RandomNumber;
+
+
 	// UENUM(BlueprintType) Rend l'enum accessible et utilisable dans les Blueprints
 
 protected:
@@ -170,5 +185,9 @@ public:
 
 	// Use this for ENUM and all conditions
 	void SetupMeshSize();
+
+	// This for ENUM COLORS AND CASES
+	// Color with Linear Color and Give à random flaot for the SdValue
+	void SetupColor(FLinearColor Color);
 
 };
