@@ -30,6 +30,9 @@ ACPP_PyramidOfCubes_AllRndColors::ACPP_PyramidOfCubes_AllRndColors()
 	Stones_Z = 0;
 	StoneZOffset = 50.0f;
 
+	// Seed
+
+
 }
 
 void ACPP_PyramidOfCubes_AllRndColors::OnConstruction(const FTransform& Transform)
